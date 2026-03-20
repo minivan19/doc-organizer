@@ -449,17 +449,33 @@ def organize_work_orders(logger, sync_state, mapping, dry_run=False, dry_counter
         return
     
     for f in OP_DIR.glob('*.xlsx'):
+        df = None
+        # 遍历所有 sheet，找到含"客户名称"列的那个
         try:
-            df = pd.read_excel(f)
-        except:
+            xl = pd.ExcelFile(f)
+            for sheet in xl.sheet_names:
+                try:
+                    _df = xl.parse(sheet)
+                    for col in _df.columns:
+                        if '客户' in str(col) and '名称' in str(col):
+                            df = _df
+                            break
+                    if df is not None:
+                        break
+                except Exception:
+                    continue
+        except Exception:
             continue
-        
+
+        if df is None or df.empty:
+            continue
+
         client_col = None
         for col in df.columns:
             if '客户' in str(col) and '名称' in str(col):
                 client_col = col
                 break
-        
+
         if client_col is None:
             continue
         
