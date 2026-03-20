@@ -494,12 +494,19 @@ def organize_work_orders(logger, sync_state, mapping, dry_run=False, dry_counter
             dst_file.parent.mkdir(parents=True, exist_ok=True)
             
             if dst_file.exists():
-                existing = pd.read_excel(dst_file)
-                if '编号' in existing.columns and '编号' in client_df.columns:
-                    combined = pd.concat([existing, client_df]).drop_duplicates(subset=['编号'], keep='last')
+                try:
+                    existing = pd.read_excel(dst_file)
+                except Exception:
+                    logger.warning(f'  目标文件损坏，将被覆盖: {dst_file}')
+                    existing = None
+                if existing is not None:
+                    if '编号' in existing.columns and '编号' in client_df.columns:
+                        combined = pd.concat([existing, client_df]).drop_duplicates(subset=['编号'], keep='last')
+                    else:
+                        combined = pd.concat([existing, client_df])
+                    write_excel(combined, dst_file, logger, dry_run, dry_counter)
                 else:
-                    combined = pd.concat([existing, client_df])
-                write_excel(combined, dst_file, logger, dry_run, dry_counter)
+                    write_excel(client_df, dst_file, logger, dry_run, dry_counter)
             else:
                 write_excel(client_df, dst_file, logger, dry_run, dry_counter)
         
