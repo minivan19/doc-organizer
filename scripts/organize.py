@@ -245,8 +245,10 @@ def organize_customer_kb(logger, sync_state, mapping, dry_run=False, dry_counter
                         copy_file(f, dst / f.name, sync_state, logger, dry_run, dry_counter)
 
 
-def split_excel_with_openpyxl(src_file, target_dir, mapping, dst_filename, client_col_pattern, logger, dry_run=False, dry_counter=None):
-    """使用openpyxl拆分Excel"""
+def split_excel_with_openpyxl(src_file, target_dir, mapping, dst_filename, client_col_pattern, logger, subdir=None, dry_run=False, dry_counter=None):
+    """使用openpyxl拆分Excel
+    subdir: 子目录名，如 '基础数据'、'实施合同行' 等
+    """
     try:
         wb = openpyxl.load_workbook(src_file)
         
@@ -279,12 +281,17 @@ def split_excel_with_openpyxl(src_file, target_dir, mapping, dst_filename, clien
                 if short_name is None:
                     continue
                 
+                if subdir:
+                    dst_sub = target_dir / short_name / subdir
+                else:
+                    dst_sub = target_dir / short_name
+                
                 if '明细' in sheet_name:
-                    fname = '订阅明细.xlsx'
+                    fname = dst_filename  # 明细类也用传入的文件名
                 else:
                     fname = dst_filename
                 
-                dst_file = target_dir / short_name / fname
+                dst_file = dst_sub / fname
                 df = pd.DataFrame(rows, columns=header_row)
                 write_excel(df, dst_file, logger, dry_run, dry_counter)
         
@@ -294,8 +301,11 @@ def split_excel_with_openpyxl(src_file, target_dir, mapping, dst_filename, clien
         return False
 
 
-def split_excel_with_xlrd(src_file, target_dir, mapping, client_col_idx, logger, dry_run=False, dry_counter=None):
-    """使用xlrd读取xls文件并拆分"""
+def split_excel_with_xlrd(src_file, target_dir, mapping, client_col_idx, logger, subdir=None, dst_filename=None, dry_run=False, dry_counter=None):
+    """使用xlrd读取xls文件并拆分
+    subdir: 子目录名
+    dst_filename: 目标文件名（含扩展名）
+    """
     try:
         wb = xlrd.open_workbook(src_file)
         ws = wb.sheet_by_index(0)
@@ -318,7 +328,13 @@ def split_excel_with_xlrd(src_file, target_dir, mapping, client_col_idx, logger,
             if short_name is None:
                 continue
             
-            dst_file = target_dir / short_name / '订阅合同收款情况' / '订阅合同收款情况.xlsx'
+            if subdir:
+                dst_sub = target_dir / short_name / subdir
+            else:
+                dst_sub = target_dir / short_name
+            
+            fname = dst_filename if dst_filename else src_file.name
+            dst_file = dst_sub / fname
             df = pd.DataFrame(rows, columns=header_row)
             write_excel(df, dst_file, logger, dry_run, dry_counter)
         
@@ -337,27 +353,27 @@ def organize_business_summary(logger, sync_state, mapping, dry_run=False, dry_co
         logger.info(f'  目录不存在: {biz_dir}')
         return
     
-    # 客户主数据
+    # 客户主数据 → 基础数据/客户主数据.xlsx（覆盖）
     for f in biz_dir.glob('*客户主数据*'):
         if f.is_file():
-            split_excel_with_openpyxl(f, TARGET_DIR / '客户档案', mapping, '客户主数据.xlsx', '真实服务对象', logger, dry_run, dry_counter)
+            split_excel_with_openpyxl(f, TARGET_DIR / '客户档案', mapping, '客户主数据.xlsx', '真实服务对象', logger, subdir='基础数据', dry_run=dry_run, dry_counter=dry_counter)
     
-    # 订阅台账
+    # 订阅台账 → 订阅合同行/订阅台账.xlsx（覆盖）
     for f in biz_dir.glob('*订阅台账*'):
         if f.is_file():
-            split_excel_with_openpyxl(f, TARGET_DIR / '客户档案', mapping, '订阅台账.xlsx', '真实服务对象', logger, dry_run, dry_counter)
+            split_excel_with_openpyxl(f, TARGET_DIR / '客户档案', mapping, '订阅台账.xlsx', '真实服务对象', logger, subdir='订阅合同行', dry_run=dry_run, dry_counter=dry_counter)
     
-    # 固定金额台账
+    # 固定金额台账 → 实施合同行/固定金额台账.xlsx（覆盖）
     for f in biz_dir.glob('*固定金额*'):
         if f.is_file():
-            split_excel_with_openpyxl(f, TARGET_DIR / '客户档案', mapping, '固定金额台账.xlsx', '最终服务对象', logger, dry_run, dry_counter)
+            split_excel_with_openpyxl(f, TARGET_DIR / '客户档案', mapping, '固定金额台账.xlsx', '最终服务对象', logger, subdir='实施合同行', dry_run=dry_run, dry_counter=dry_counter)
     
-    # 人天框架台账
+    # 人天框架台账 → 实施合同行/人天框架台账.xlsx（覆盖）
     for f in biz_dir.glob('*人天框架*'):
         if f.is_file():
-            split_excel_with_openpyxl(f, TARGET_DIR / '客户档案', mapping, '人天框架台账.xlsx', '最终服务对象', logger, dry_run, dry_counter)
+            split_excel_with_openpyxl(f, TARGET_DIR / '客户档案', mapping, '人天框架台账.xlsx', '最终服务对象', logger, subdir='实施合同行', dry_run=dry_run, dry_counter=dry_counter)
     
-    # 项目收款进度查询 (.xls)
+    # 项目收款进度查询 (.xls) → 订阅合同收款情况/项目收款进度查询.xlsx（覆盖）
     for f in biz_dir.glob('*项目收款*'):
         if f.is_file() and f.suffix == '.xls':
             wb = xlrd.open_workbook(f)
@@ -369,7 +385,8 @@ def organize_business_summary(logger, sync_state, mapping, dry_run=False, dry_co
                     client_col_idx = i
                     break
             if client_col_idx:
-                split_excel_with_xlrd(f, TARGET_DIR / '客户档案', mapping, client_col_idx, logger, dry_run, dry_counter)
+                dst_fname = f.stem + '.xlsx'  # 项目收款进度查询.xlsx
+                split_excel_with_xlrd(f, TARGET_DIR / '客户档案', mapping, client_col_idx, logger, subdir='订阅合同收款情况', dst_filename=dst_fname, dry_run=dry_run, dry_counter=dry_counter)
 
 
 def merge_folders(logger, dry_run=False, dry_counter=None):
