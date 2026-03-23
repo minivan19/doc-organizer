@@ -35,8 +35,8 @@ def get_path(key, default):
 
 
 # 路径配置（可外置到 config.json）
-SOURCE_DIR = get_path('source_dir', r'C:\work')
-TARGET_DIR = get_path('target_dir', r'C:\Users\mingh\client-data\raw')
+SOURCE_DIR = get_path('source_dir', '/Users/limingheng/AI/client-data/raw')
+TARGET_DIR = get_path('target_dir', r'/Users/limingheng/AI\client-data\raw')
 LOG_DIR = get_path('log_dir', Path(__file__).parent.parent / 'logs')
 
 MASTER_FILE = SOURCE_DIR / '商务信息档案' / '客户主数据_20260306113642.xlsx'

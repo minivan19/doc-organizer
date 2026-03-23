@@ -1,5 +1,5 @@
 {
-  "source_dir": "C:\\work",
-  "target_dir": "C:\\Users\\mingh\\client-data\\raw",
-  "log_dir": "C:\\Users\\mingh\\.openclaw\\workspace\\skills\\doc-organizer\\logs"
+  "source_dir": "/Users/limingheng/AI/client-data/raw",
+  "target_dir": "/Users/limingheng/AI/client-data/raw",
+  "log_dir": "/Users/limingheng/.openclaw/workspace/skills/doc-organizer/logs"
 }
