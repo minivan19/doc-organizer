@@ -36,7 +36,7 @@ def get_path(key, default):
 
 # 路径配置（可外置到 config.json）
 SOURCE_DIR = get_path('source_dir', '/Users/limingheng/AI/client-data/raw')
-TARGET_DIR = get_path('target_dir', r'/Users/limingheng/AI\client-data\raw')
+TARGET_DIR = get_path('target_dir', '/Users/limingheng/AI/client-data/客户档案')
 LOG_DIR = get_path('log_dir', Path(__file__).parent.parent / 'logs')
 
 MASTER_FILE = SOURCE_DIR / '商务信息档案' / '客户主数据_20260306113642.xlsx'
@@ -216,8 +216,8 @@ def organize_customer_kb(logger, sync_state, mapping, dry_run=False, dry_counter
             
             # 蓝图 -> 优秀客户方案 + 客户档案/蓝图方案
             if '蓝图' in subfolder_name:
-                dst1 = TARGET_DIR / '优秀客户方案' / customer_name / '蓝图'
-                dst2 = TARGET_DIR / '客户档案' / customer_name / '蓝图方案'
+                dst1 = SOURCE_DIR / '优秀客户方案' / customer_name / '蓝图'
+                dst2 = TARGET_DIR / customer_name / '蓝图方案'
                 for f in subfolder.glob('*'):
                     if f.is_file():
                         copy_file(f, dst1 / f.name, sync_state, logger, dry_run, dry_counter)
@@ -225,21 +225,21 @@ def organize_customer_kb(logger, sync_state, mapping, dry_run=False, dry_counter
             
             # 运维工单 -> 客户档案/运维工单
             elif '运维工单' in subfolder_name:
-                dst = TARGET_DIR / '客户档案' / customer_name / '运维工单'
+                dst = TARGET_DIR / customer_name / '运维工单'
                 for f in subfolder.glob('*'):
                     if f.is_file():
                         copy_file(f, dst / f.name, sync_state, logger, dry_run, dry_counter)
             
             # 一线视图 -> 客户档案/蓝图方案
             elif '一线视图' in subfolder_name:
-                dst = TARGET_DIR / '客户档案' / customer_name / '蓝图方案'
+                dst = TARGET_DIR / customer_name / '蓝图方案'
                 for f in subfolder.glob('*'):
                     if f.is_file():
                         copy_file(f, dst / f.name, sync_state, logger, dry_run, dry_counter)
             
             # 其他 -> 客户档案/其他文档
             else:
-                dst = TARGET_DIR / '客户档案' / customer_name / '其他文档'
+                dst = TARGET_DIR / customer_name / '其他文档'
                 for f in subfolder.glob('*'):
                     if f.is_file():
                         copy_file(f, dst / f.name, sync_state, logger, dry_run, dry_counter)
@@ -356,22 +356,22 @@ def organize_business_summary(logger, sync_state, mapping, dry_run=False, dry_co
     # 客户主数据 → 基础数据/客户主数据.xlsx（覆盖）
     for f in biz_dir.glob('*客户主数据*'):
         if f.is_file():
-            split_excel_with_openpyxl(f, TARGET_DIR / '客户档案', mapping, '客户主数据.xlsx', '真实服务对象', logger, subdir='基础数据', dry_run=dry_run, dry_counter=dry_counter)
+            split_excel_with_openpyxl(f, TARGET_DIR, mapping, '客户主数据.xlsx', '真实服务对象', logger, subdir='基础数据', dry_run=dry_run, dry_counter=dry_counter)
     
     # 订阅台账 → 订阅合同行/订阅台账.xlsx（覆盖）
     for f in biz_dir.glob('*订阅台账*'):
         if f.is_file():
-            split_excel_with_openpyxl(f, TARGET_DIR / '客户档案', mapping, '订阅台账.xlsx', '真实服务对象', logger, subdir='订阅合同行', dry_run=dry_run, dry_counter=dry_counter)
+            split_excel_with_openpyxl(f, TARGET_DIR, mapping, '订阅台账.xlsx', '真实服务对象', logger, subdir='订阅合同行', dry_run=dry_run, dry_counter=dry_counter)
     
     # 固定金额台账 → 实施合同行/固定金额台账.xlsx（覆盖）
     for f in biz_dir.glob('*固定金额*'):
         if f.is_file():
-            split_excel_with_openpyxl(f, TARGET_DIR / '客户档案', mapping, '固定金额台账.xlsx', '最终服务对象', logger, subdir='实施合同行', dry_run=dry_run, dry_counter=dry_counter)
+            split_excel_with_openpyxl(f, TARGET_DIR, mapping, '固定金额台账.xlsx', '最终服务对象', logger, subdir='实施合同行', dry_run=dry_run, dry_counter=dry_counter)
     
     # 人天框架台账 → 实施合同行/人天框架台账.xlsx（覆盖）
     for f in biz_dir.glob('*人天框架*'):
         if f.is_file():
-            split_excel_with_openpyxl(f, TARGET_DIR / '客户档案', mapping, '人天框架台账.xlsx', '最终服务对象', logger, subdir='实施合同行', dry_run=dry_run, dry_counter=dry_counter)
+            split_excel_with_openpyxl(f, TARGET_DIR, mapping, '人天框架台账.xlsx', '最终服务对象', logger, subdir='实施合同行', dry_run=dry_run, dry_counter=dry_counter)
     
     # 项目收款进度查询 (.xls) → 订阅合同收款情况/项目收款进度查询.xlsx（覆盖）
     for f in biz_dir.glob('*项目收款*'):
@@ -386,14 +386,14 @@ def organize_business_summary(logger, sync_state, mapping, dry_run=False, dry_co
                     break
             if client_col_idx:
                 dst_fname = f.stem + '.xlsx'  # 项目收款进度查询.xlsx
-                split_excel_with_xlrd(f, TARGET_DIR / '客户档案', mapping, client_col_idx, logger, subdir='订阅合同收款情况', dst_filename=dst_fname, dry_run=dry_run, dry_counter=dry_counter)
+                split_excel_with_xlrd(f, TARGET_DIR, mapping, client_col_idx, logger, subdir='订阅合同收款情况', dst_filename=dst_fname, dry_run=dry_run, dry_counter=dry_counter)
 
 
 def merge_folders(logger, dry_run=False, dry_counter=None):
     """合并文件夹：固定金额+人天框架 -> 实施合同行"""
     logger.info('=== 合并文件夹 ===')
     
-    base = TARGET_DIR / '客户档案'
+    base = TARGET_DIR
     if not base.exists():
         return
     
@@ -433,7 +433,7 @@ def move_files_to_subfolder(logger, dry_run=False, dry_counter=None):
     """移动根目录下的文件到正确子目录"""
     logger.info('=== 移动文件到子目录 ===')
     
-    base = TARGET_DIR / '客户档案'
+    base = TARGET_DIR
     if not base.exists():
         return
     
@@ -507,7 +507,7 @@ def organize_work_orders(logger, sync_state, mapping, dry_run=False, dry_counter
             if len(client_df) == 0:
                 continue
             
-            dst_file = TARGET_DIR / '客户档案' / short_name / '运维工单' / f.name
+            dst_file = TARGET_DIR / short_name / '运维工单' / f.name
             dst_file.parent.mkdir(parents=True, exist_ok=True)
             
             if dst_file.exists():

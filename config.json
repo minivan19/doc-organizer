@@ -1,5 +1,7 @@
 {
   "source_dir": "/Users/limingheng/AI/client-data/raw",
-  "target_dir": "/Users/limingheng/AI/client-data/raw",
+  "target_dir": "/Users/limingheng/AI/client-data/客户档案",
+  "mapping_file": "/Users/limingheng/AI/client-data/客户档案/_mapping.json",
+  "sync_state_file": "/Users/limingheng/AI/client-data/客户档案/_sync_state.json",
   "log_dir": "/Users/limingheng/.openclaw/workspace/skills/doc-organizer/logs"
 }
