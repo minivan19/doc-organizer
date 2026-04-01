@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-文档归类整理工具 v6
+文档归类整理工具 v7
 只做两件事：
-1. 商务信息Excel按客户拆分 → 客户档案/{客户}/对应子目录（覆盖）
+1. 商务信息Excel按客户拆分 → 客户档案/{客户}/对应子目录（全量覆盖）
 2. 运维工单Excel增量拆分合并 → 客户档案/{客户}/运维工单/（去重合并）
 """
 
@@ -142,21 +142,13 @@ def split_excel_openpyxl(src_file, mapping, spec, logger):
             row_data = [c.value if c.value is not None else '' for c in ws[row_idx]]
             client_rows.setdefault(short_name, []).append(row_data)
 
-        # 逐客户写入
+        # 逐客户写入（全量覆盖，不再追加合并）
         for short_name, rows in client_rows.items():
             dst_file = TARGET_DIR / short_name / spec['dst_subdir'] / spec['dst_filename']
             dst_file.parent.mkdir(parents=True, exist_ok=True)
-            new_df = pd.DataFrame(rows, columns=header_row)
-            if dst_file.exists():
-                try:
-                    existing = pd.read_excel(dst_file)
-                    df = pd.concat([existing, new_df], ignore_index=True)
-                except Exception:
-                    df = new_df
-            else:
-                df = new_df
+            df = pd.DataFrame(rows, columns=header_row)
             df.to_excel(dst_file, index=False)
-            logger.info(f'  更新 {short_name}/{spec["dst_subdir"]}/{spec["dst_filename"]}')
+            logger.info(f'  覆盖 {short_name}/{spec["dst_subdir"]}/{spec["dst_filename"]}')
 
 
 def split_excel_xlrd(src_file, mapping, spec, logger):
@@ -186,17 +178,9 @@ def split_excel_xlrd(src_file, mapping, spec, logger):
     for short_name, rows in client_rows.items():
         dst_file = TARGET_DIR / short_name / spec['dst_subdir'] / spec['dst_filename']
         dst_file.parent.mkdir(parents=True, exist_ok=True)
-        new_df = pd.DataFrame(rows, columns=header_row)
-        if dst_file.exists():
-            try:
-                existing = pd.read_excel(dst_file)
-                df = pd.concat([existing, new_df], ignore_index=True)
-            except Exception:
-                df = new_df
-        else:
-            df = new_df
+        df = pd.DataFrame(rows, columns=header_row)
         df.to_excel(dst_file, index=False)
-        logger.info(f'  更新 {short_name}/{spec["dst_subdir"]}/{spec["dst_filename"]}')
+        logger.info(f'  覆盖 {short_name}/{spec["dst_subdir"]}/{spec["dst_filename"]}')
 def organize_business_summary(logger, mapping):
     """商务信息Excel拆分"""
     logger.info('=== 商务信息拆分 ===')
